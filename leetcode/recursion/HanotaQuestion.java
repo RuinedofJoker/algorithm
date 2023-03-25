@@ -3,6 +3,9 @@ package recursion;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 汉诺塔问题
+ */
 public class HanotaQuestion {
 
     public static void main(String[] args) {
