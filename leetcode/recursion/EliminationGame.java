@@ -83,3 +83,78 @@ public class EliminationGame {
         return a1;
     }
 }
+
+//以下解法无错误但会超时
+//class Solution {
+//    int[] nList;
+//    public int lastRemaining(int n) {
+//        nList = new int[n+1];
+//        for (int i = 0; i < nList.length;i++){
+//            nList[i] = i;
+//        }
+//        elimination(1, 1, 1, n);
+//        int result = 0;
+//        for (int i:nList){
+//            if (i != 0){
+//                result = i;
+//                break;
+//            }
+//        }
+//        return result;
+//    }
+//
+//    /**
+//     *
+//     * @param subscript 数组当前该访问的下标
+//     * @param shouldRemove 应该把当前下标元素移除吗
+//     * @param isPositive 当前访问是否为正序
+//     */
+//    public void elimination(int subscript, int shouldRemove, int isPositive, int notZero){
+//        //退出条件(非0元素个数为1)
+//        if (notZero == 1 || notZero == 0){
+//            return;
+//        }
+//        //当前下标元素移除(数组该下标元素置为0)
+//        if (shouldRemove == 1){
+//            nList[subscript] = 0;
+//            notZero--;
+//        }
+//        shouldRemove = -shouldRemove;
+//        if (isPositive == 1){
+//            subscript++;
+//        }else {
+//            subscript--;
+//        }
+//        //一次消除到头,判断下一次应该为正序还是逆序
+//        if (subscript == nList.length){
+//            isPositive = -isPositive;
+//            subscript--;
+//            shouldRemove = 1;
+//            int[] temp = new int[notZero+1];
+//            int j = 1;
+//            for (int i = 0 ;i < nList.length; i++){
+//                if (nList[i] != 0){
+//                    temp[j] = nList[i];
+//                    j++;
+//                }
+//            }
+//            nList = temp;
+//            subscript = nList.length-1;
+//        }else if (subscript == 0){
+//            isPositive = -isPositive;
+//            subscript++;
+//            shouldRemove = 1;
+//            int[] temp = new int[notZero+1];
+//            int j = 1;
+//            for (int i = 0 ;i < nList.length; i++){
+//                if (nList[i] != 0){
+//                    temp[j] = nList[i];
+//                    j++;
+//                }
+//            }
+//            nList = temp;
+//            subscript = 1;
+//        }
+//        elimination(subscript, shouldRemove, isPositive, notZero);
+//    }
+//}
