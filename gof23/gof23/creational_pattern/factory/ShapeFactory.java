@@ -1,5 +1,10 @@
 package gof23.creational_pattern.factory;
 
+import gof23.creational_pattern.factory.shape.Circle;
+import gof23.creational_pattern.factory.shape.Rectangle;
+import gof23.creational_pattern.factory.shape.Shape;
+import gof23.creational_pattern.factory.shape.Square;
+
 public class ShapeFactory {
     Shape getShape(String shapeType) {
         Shape shape;

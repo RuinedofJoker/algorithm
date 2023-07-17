@@ -1,4 +1,11 @@
-package gof23.creational_pattern.abstract_factory;
+package gof23.creational_pattern.abstract_factory.factory;
+
+import gof23.creational_pattern.abstract_factory.color.Color;
+import gof23.creational_pattern.abstract_factory.factory.AbstractFactory;
+import gof23.creational_pattern.abstract_factory.shape.Circle;
+import gof23.creational_pattern.abstract_factory.shape.Rectangle;
+import gof23.creational_pattern.abstract_factory.shape.Shape;
+import gof23.creational_pattern.abstract_factory.shape.Square;
 
 public class ShapeFactory extends AbstractFactory {
     @Override

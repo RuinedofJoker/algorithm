@@ -1,4 +1,4 @@
-package gof23.creational_pattern.abstract_factory;
+package gof23.creational_pattern.abstract_factory.factory;
 
 public class FactoryProducer {
     public static AbstractFactory getFactory(String choice) {

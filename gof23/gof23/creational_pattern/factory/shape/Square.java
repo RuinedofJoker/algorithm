@@ -1,4 +1,6 @@
-package gof23.creational_pattern.abstract_factory;
+package gof23.creational_pattern.factory.shape;
+
+import gof23.creational_pattern.factory.shape.Shape;
 
 public class Square implements Shape {
     @Override

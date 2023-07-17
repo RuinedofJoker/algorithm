@@ -1,4 +1,6 @@
-package gof23.creational_pattern.abstract_factory;
+package gof23.creational_pattern.abstract_factory.shape;
+
+import gof23.creational_pattern.abstract_factory.shape.Shape;
 
 public class Circle implements Shape {
     @Override

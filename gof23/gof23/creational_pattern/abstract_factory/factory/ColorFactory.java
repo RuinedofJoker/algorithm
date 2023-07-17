@@ -1,6 +1,12 @@
-package gof23.creational_pattern.abstract_factory;
+package gof23.creational_pattern.abstract_factory.factory;
 
-public class ColorFactory extends AbstractFactory{
+import gof23.creational_pattern.abstract_factory.color.Blue;
+import gof23.creational_pattern.abstract_factory.color.Color;
+import gof23.creational_pattern.abstract_factory.color.Green;
+import gof23.creational_pattern.abstract_factory.color.Red;
+import gof23.creational_pattern.abstract_factory.shape.Shape;
+
+public class ColorFactory extends AbstractFactory {
     @Override
     public Color getColor(String colorType) {
         Color color;
