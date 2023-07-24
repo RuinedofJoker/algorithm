@@ -28,6 +28,7 @@ public class RESP {
         readLength = 0;
         if (SIMPLE_STRINGS.equals(respType) || ERROR.equals(respType) || NUMBER.equals(respType)) {
             length = COMMON_LENGTH;
+            unresolvedBuf = new ArrayList();
         }else {
             length = UNINITIALIZED_LENGTH;
         }

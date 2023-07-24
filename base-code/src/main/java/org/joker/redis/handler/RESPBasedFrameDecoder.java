@@ -7,6 +7,7 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import lombok.extern.slf4j.Slf4j;
 import org.joker.redis.protocol.RESP;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,79 +23,96 @@ public class RESPBasedFrameDecoder extends ByteToMessageDecoder {
 
     private RESP lastContent;
 
-/*             +-------------------------------------------------+
-                     |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
-            +--------+-------------------------------------------------+----------------+
-            |00000000| 2a 33 0d 0a 24 33 0d 0a 53 45 54 0d 0a 24 33 0d |*3..$3..SET..$3.|
-            |00000010| 0a 6b 65 79 0d 0a 24 35 0d 0a 68 65 6c 6c 6f 0d |.key..$5..hello.|
-            |00000020| 0a                                              |.               |
-            +--------+-------------------------------------------------+----------------+
-
-               +-------------------------------------------------+
-                     |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
-            +--------+-------------------------------------------------+----------------+
-            |00000000| 2b 4f 4b 0d 0a                                  |+OK..           |
-            +--------+-------------------------------------------------+----------------+
-*/
-
-
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-        if (lastContent == null) {
-            while (in.isReadable()) {
-                RESP resp = new RESP(Byte.toString(in.readByte()));
-                resolveLength(resp, in);
-                int contentCode = resolveContent(resp, in);
-                if (contentCode == -1) {
-                    lastContent = resp;
-                    break;
-                }
-                if (contentCode == -2) {
-                    throw new RuntimeException("error");
-                }
-                out.add(resp);
+        while (in.isReadable()) {
+            RESP resp;
+            if (lastContent == null) {
+                resp = new RESP((char) in.readByte() + "");
+            }else {
+                resp = lastContent;
+                lastContent = null;
             }
-        }else {
-
+            //读取resp报文长度
+            int lengthCode = resolveLength(resp, in);
+            if (lengthCode == -1) {
+                lastContent = resp;
+                break;
+            }
+            if (lengthCode == -2) {
+                throw new RuntimeException("error");
+            }
+            //读取resp报文内容
+            int contentCode = resolveContent(resp, in);
+            if (contentCode == -1) {
+                lastContent = resp;
+                break;
+            }
+            if (contentCode == -2) {
+                throw new RuntimeException("error");
+            }
+            out.add(resp);
+            overLine(in);
         }
-
-        in.release();
     }
 
+    /**
+     * 读取当前resp报文长度
+     * @param resp
+     * @param in
+     * @return  0正常 -1未读完 -2错误
+     */
     private int resolveLength(RESP resp, ByteBuf in) {
-        if (resp.getLength() == RESP.COMMON_LENGTH) {
-            return 0;
-        }else {
-            if (!in.isReadable()) {
-                return -1;
-            }
-            resp.setLength(Integer.parseInt(Byte.toString(in.readByte())));
+//        if (true) {//
+//            resp.setUnresolvedBuf(resp.getUnresolvedBuf() == null ? new ArrayList() : resp.getUnresolvedBuf());//
+//            return 0;//
+//        }//
+        if (resp.getLength() != RESP.UNINITIALIZED_LENGTH) {
+            //已经读取过长度
             return 0;
         }
+        if (!in.isReadable()) {
+            //当前报文发送内容不足(半包),未发送长度
+            return -1;
+        }
+        resp.setLength(Integer.parseInt((char) in.readByte() + ""));
+        overLine(in);
+        return 0;
     }
 
+    /**
+     * 读取封装当前resp报文内容
+     * @param resp
+     * @param in
+     * @return 0正常 -1未读完 -2错误
+     */
     private int resolveContent(RESP resp, ByteBuf in) {
-        if (RESP.SIMPLE_STRINGS.equals(resp.getRespType())
-                || RESP.ERROR.equals(resp.getRespType())
-                || RESP.NUMBER.equals(resp.getRespType())) {
+        if (RESP.SIMPLE_STRINGS.equals(resp.getRespType())///---
+                || RESP.ERROR.equals(resp.getRespType())///---
+                || RESP.NUMBER.equals(resp.getRespType())) {//---
+        //if (true) {//
             //普通类型,以\r\n结尾
             List<Byte> content = resp.getUnresolvedBuf();
             while (in.isReadable()) {
                 content.add(in.readByte());
-                if (content.get(content.size() - 2) == '\r' && content.get(content.size() - 1) == '\n') {
+                if (content.size() >= 2
+                        && (content.get(content.size() - 2) == '\r' && content.get(content.size() - 1) == '\n')) {
+                    resp.setCommonContent(Bytes.toArray(resp.getUnresolvedBuf()));
                     return 0;
                 }
             }
 
-            //没有读到\r\n
+            //没有读到\r\n(半包)
             return -1;
-        }else if (RESP.BULK_STRINGS.equals(resp.getRespType())) {
+        }else if (RESP.BULK_STRINGS.equals(resp.getRespType())) {//---
+        //}else if (false) {//
             //带长度的字符串
             byte[] content = resp.getCommonContent();
             int readableBytes = in.readableBytes();
             if (readableBytes >= resp.readableLength()) {
                 //当前resp可读满
                 in.readBytes(content, resp.getReadLength(), resp.readableLength());
+                overLine(in);
                 return 0;
             }else {
                 //当前resp读不满
@@ -102,13 +120,35 @@ public class RESPBasedFrameDecoder extends ByteToMessageDecoder {
                 resp.setReadLength(resp.getReadLength() + readableBytes);
                 return -1;
             }
-        }else if (RESP.ARRAY.equals(resp.getRespType())) {
-
+        }else if (RESP.ARRAY.equals(resp.getRespType())) {//---
+        //}else if (false) {//
+            //数组(多个resp报文)
+            List<RESP> arrayContent = resp.getArrayContent();
+            resolveLength(resp, in);
+            for (int i = resp.getReadLength(); i < resp.getLength(); i++) {
+                if (!in.isReadable()) {
+                    return -1;
+                }
+                RESP itemResp = arrayContent.get(i);
+                if (itemResp == null) {
+                    itemResp = new RESP((char) in.readByte() + "");
+                    arrayContent.add(i, itemResp);
+                }
+                int itemLengthCode = resolveLength(itemResp, in);
+                if (itemLengthCode != 0) {
+                    return itemLengthCode;
+                }
+                int itemContentCode = resolveContent(itemResp, in);
+                if (itemContentCode != 0) {
+                    return itemContentCode;
+                }
+            }
         }
         return -2;
     }
 
-    private int resolveCommonContent(RESP resp, ByteBuf in) {
-
+    private void overLine(ByteBuf in) {
+        in.readByte();
+        in.readByte();
     }
 }
