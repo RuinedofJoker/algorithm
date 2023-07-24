@@ -27,12 +27,12 @@ public class MyLock implements Lock {
             threadPool.execute(() -> {
                 lock.lock();
                 try {
-                    log.debug("locking...");
+                    //log.debug("locking...");
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } finally {
-                    log.debug("unlocking...");
+                    //log.debug("unlocking...");
                     lock.unlock();
                 }
             });
