@@ -1,5 +1,7 @@
 package leetcode;
 
+import java.util.*;
+
 /**
  * 146. LRU 缓存
  *
@@ -36,16 +38,88 @@ package leetcode;
  * 最多调用 2 * 105 次 get 和 put
  */
 public class LRUCache {
-    public LRUCache(int capacity) {
+    private int capacity;
+    private Map<Integer, Node> cache;
 
+    //双向队列,队首存放刚刚查出来或插入的元素,队尾存放马上被剔除的元素
+    private final Node firstNode;
+
+    public LRUCache(int capacity) {
+        this.capacity = capacity;
+        cache = new HashMap<>(capacity);
+        firstNode = new Node(-1, -1);
+        firstNode.next = firstNode;
+        firstNode.before = firstNode;
     }
 
     public int get(int key) {
-        return 1;
+        if (cache.containsKey(key)) {
+            Node searchNode = cache.get(key);
+            //将searchNode放入队首
+            searchNode.before.next = searchNode.next;
+            searchNode.next.before = searchNode.before;
+            Node beforeFirstNode = firstNode.next;
+            beforeFirstNode.before = searchNode;
+            firstNode.next = searchNode;
+            searchNode.before = firstNode;
+            searchNode.next = beforeFirstNode;
+            return searchNode.value;
+        }else {
+            return -1;
+        }
     }
 
     public void put(int key, int value) {
+        if (cache.containsKey(key)) {
+            Node searchNode = cache.get(key);
+            searchNode.value = value;
+            //将searchNode放入队首
+            searchNode.before.next = searchNode.next;
+            searchNode.next.before = searchNode.before;
+            Node beforeFirstNode = firstNode.next;
+            beforeFirstNode.before = searchNode;
+            firstNode.next = searchNode;
+            searchNode.before = firstNode;
+            searchNode.next = beforeFirstNode;
+        }else {
+            if (cache.size() == capacity) {
+                //剔除队尾元素
+                Node afterRemoveNode = firstNode.before;
+                Node afterLastNode = afterRemoveNode.before;
+                cache.remove(afterRemoveNode.key);
+                afterLastNode.next = firstNode;
+                firstNode.before = afterLastNode;
+            }
+            //在队首插入该元素
+            Node newNode = new Node(key, value);
+            cache.put(key, newNode);
+            Node beforeFirstNode = firstNode.next;
+            newNode.before = firstNode;
+            newNode.next = beforeFirstNode;
+            firstNode.next = newNode;
+            beforeFirstNode.before = newNode;
+        }
+    }
 
+    public static class Node {
+        public Node before;
+        public Node next;
+        public int key;
+        public int value;
+
+        public Node(int key, int value) {
+            this.key = key;
+            this.value = value;
+        }
+
+        public Node(Node before, Node next, int value) {
+            this.before = before;
+            this.next = next;
+            this.value = value;
+        }
+
+        public Node() {
+        }
     }
 }
 /**
