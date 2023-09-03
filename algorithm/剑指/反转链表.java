@@ -7,7 +7,8 @@ public class 反转链表 {
     private ListNode newHead;
     public ListNode reverseList(ListNode head) {
         if (head == null) return null;
-        reve(head) = null;
+        ListNode last = reve(head);
+        last = null;
         return newHead;
     }
 
