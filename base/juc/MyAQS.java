@@ -23,7 +23,10 @@ public class MyAQS {
 
     public void unLock() {
         if (holdThread == Thread.currentThread()) {
-            state.compareAndSet(1, 0);
+            while (!state.compareAndSet(1, 0)) {
+
+            }
+            holdThread = null;
             awakenAll();
         }
     }
